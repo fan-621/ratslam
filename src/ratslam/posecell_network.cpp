@@ -42,9 +42,9 @@ namespace ratslam
 PosecellNetwork::PosecellNetwork(ptree settings)
 {
   /*
-   ** pose cell constants.
+   ** pose cell constants. 
    */
-  get_setting_from_ptree(PC_DIM_XY, settings, "pc_dim_xy", 21);
+  get_setting_from_ptree(PC_DIM_XY, settings, "pc_dim_xy", 21);  //检测异常
   get_setting_from_ptree(PC_DIM_TH, settings, "pc_dim_th", 36);
   get_setting_from_ptree(PC_W_E_DIM, settings, "pc_w_e_dim", 7);
   get_setting_from_ptree(PC_W_I_DIM, settings, "pc_w_i_dim", 5);
@@ -60,14 +60,14 @@ PosecellNetwork::PosecellNetwork(ptree settings)
   get_setting_from_ptree(PC_VT_RESTORE, settings, "pc_vt_restore", 0.05);
 
   // the starting position within the posecell network
-  best_x = floor((double)PC_DIM_XY / 2.0);
+  best_x = floor((double)PC_DIM_XY / 2.0);   //初始位置赋值
   best_y = floor((double)PC_DIM_XY / 2.0);
   best_th = floor((double)PC_DIM_TH / 2.0);
 
-  current_exp = 0;
-  current_vt = 0;
+  current_exp = 0;  //当前经验点编号
+  current_vt = 0;   //当前视觉模板编号
 
-  pose_cell_builder();
+  pose_cell_builder();  
 
   odo_update = false;
   vt_update = false;
@@ -78,40 +78,40 @@ void PosecellNetwork::pose_cell_builder()
 {
   int i, j;
 
-  PC_C_SIZE_TH = (2.0 * M_PI) / PC_DIM_TH;
+  PC_C_SIZE_TH = (2.0 * M_PI) / PC_DIM_TH;  //th轴代表了现实世界中的360度，将其映射3维中的一维
 
   // set the sizes
-  posecells_memory_size = sizeof(Posecell) * PC_DIM_XY * PC_DIM_XY * PC_DIM_TH;
-  posecells_elements = PC_DIM_XY * PC_DIM_XY * PC_DIM_TH;
+  posecells_memory_size = sizeof(Posecell) * PC_DIM_XY * PC_DIM_XY * PC_DIM_TH;  //表示可存数据大小，整个位姿细胞
+  posecells_elements = PC_DIM_XY * PC_DIM_XY * PC_DIM_TH;  //整个3维矩阵元素总量
 
-  // allocate the memory
-  posecells_memory = (Posecell *)malloc((size_t)posecells_memory_size);
-  pca_new_memory = (Posecell *)malloc((size_t)posecells_memory_size);
+  // allocate the memory 分配内存
+  posecells_memory = (Posecell *)malloc((size_t)posecells_memory_size); //malloc分配所需的内存空间，并返回一个指向它的指针
+  pca_new_memory = (Posecell *)malloc((size_t)posecells_memory_size); //此处类似matlab中位姿细胞迭代
 
   // zero all the memory
-  memset(posecells_memory, 0, (size_t)posecells_memory_size);
+  memset(posecells_memory, 0, (size_t)posecells_memory_size); //将元素全部置为0 返回指向posecells_memory的指针
   memset(pca_new_memory, 0, (size_t)posecells_memory_size);
 
-  // allocate first level pointers
-  posecells = (Posecell ***)malloc(sizeof(Posecell**) * PC_DIM_TH);
-  pca_new = (Posecell ***)malloc(sizeof(Posecell**) * PC_DIM_TH);
-
-  for (i = 0; i < PC_DIM_TH; i++)
+  // allocate first level pointers 一级指针
+  posecells = (Posecell ***)malloc(sizeof(Posecell**) * PC_DIM_TH);// 有PC_DIM_TH个Posecell**赋给Posecell ***
+  pca_new = (Posecell ***)malloc(sizeof(Posecell**) * PC_DIM_TH);//感觉是位姿细胞从th轴来看，有PC_DIM_TH个元素
+  //元素地址分配
+  for (i = 0; i < PC_DIM_TH; i++)  
   {
-    // allocate second level pointers
-    posecells[i] = (Posecell **)malloc(sizeof(Posecell*) * PC_DIM_XY);
-    pca_new[i] = (Posecell **)malloc(sizeof(Posecell*) * PC_DIM_XY);
+    // allocate second level pointers  二级指针
+    posecells[i] = (Posecell **)malloc(sizeof(Posecell*) * PC_DIM_XY);//从th轴来看，里面有PC_DIM_XY个Posecell*
+    pca_new[i] = (Posecell **)malloc(sizeof(Posecell*) * PC_DIM_XY);//这个指针级数是从最外一层向内研究
 
     for (j = 0; j < PC_DIM_XY; j++)
     {
       // TRICKY! point second level pointers at already allocated memory
-      posecells[i][j] = &posecells_memory[(i * PC_DIM_XY + j) * PC_DIM_XY];
-      pca_new[i][j] = &pca_new_memory[(i * PC_DIM_XY + j) * PC_DIM_XY];
-    }
-  }
+      posecells[i][j] = &posecells_memory[(i * PC_DIM_XY + j) * PC_DIM_XY];//th轴看进去后，是一个xy轴的二维矩阵
+      pca_new[i][j] = &pca_new_memory[(i * PC_DIM_XY + j) * PC_DIM_XY];//选中一个轴看进去，具体的元素
+    } //这个posecells_memory很大，相当于一个一维数组，容量是内存大小
+  }  //到目前位置，posecells和pca_new是相同的
 
-  // for path integration
-  pca_new_rot_ptr = (Posecell **)malloc(sizeof(Posecell*) * (PC_DIM_XY + 2));
+  // for path integration 路径集成
+  pca_new_rot_ptr = (Posecell **)malloc(sizeof(Posecell*) * (PC_DIM_XY + 2)); //这个是对应的，将维数扩大两个度
   pca_new_rot_ptr2 = (Posecell **)malloc(sizeof(Posecell*) * (PC_DIM_XY + 2));
   for (i = 0; i < PC_DIM_XY + 2; i++)
   {
@@ -119,20 +119,20 @@ void PosecellNetwork::pose_cell_builder()
     pca_new_rot_ptr2[i] = &pca_new_memory[(PC_DIM_XY + 2) * (PC_DIM_XY + 2) + (i * (PC_DIM_XY + 2))];
   }
 
-  posecells_plane_th = (Posecell *)malloc(sizeof(Posecell) * (PC_DIM_XY + 2) * (PC_DIM_XY + 2));
+  posecells_plane_th = (Posecell *)malloc(sizeof(Posecell) * (PC_DIM_XY + 2) * (PC_DIM_XY + 2)); //双精度浮点型(x+2)*(y+2)个元素
 
-  PC_W_EXCITE = (double *)malloc(sizeof(double) * PC_W_E_DIM * PC_W_E_DIM * PC_W_E_DIM);
-  PC_W_INHIB = (double *)malloc(sizeof(double) * PC_W_I_DIM * PC_W_I_DIM * PC_W_I_DIM);
+  PC_W_EXCITE = (double *)malloc(sizeof(double) * PC_W_E_DIM * PC_W_E_DIM * PC_W_E_DIM);//激励矩阵
+  PC_W_INHIB = (double *)malloc(sizeof(double) * PC_W_I_DIM * PC_W_I_DIM * PC_W_I_DIM);//抑制矩阵
 
-  posecells[(int)best_th][(int)best_y][(int)best_x] = 1;
+  posecells[(int)best_th][(int)best_y][(int)best_x] = 1;//机器人起步时，初始位置映射到位姿细胞矩阵中的元素变成1，即活性为1
 
   // set up the wrap lookups
   PC_W_E_DIM_HALF = (int)floor((double)PC_W_E_DIM / 2.0);
   PC_W_I_DIM_HALF = (int)floor((double)PC_W_I_DIM / 2.0);
-
-  PC_E_XY_WRAP = (int *)malloc((PC_DIM_XY + PC_W_E_DIM - 1) * sizeof(int));
-  PC_E_TH_WRAP = (int *)malloc((PC_DIM_TH + PC_W_E_DIM - 1) * sizeof(int));
-  PC_I_XY_WRAP = (int *)malloc((PC_DIM_XY + PC_W_I_DIM - 1) * sizeof(int));
+  //假设与matlab类似的化，PC_DIM_XY=61，PC_DIM_TH=36，PC_W_E_DIM=7，PC_W_I_DIM=5
+  PC_E_XY_WRAP = (int *)malloc((PC_DIM_XY + PC_W_E_DIM - 1) * sizeof(int));//首尾连接起来，包装，开辟
+  PC_E_TH_WRAP = (int *)malloc((PC_DIM_TH + PC_W_E_DIM - 1) * sizeof(int));//(36+7-1)个int型的内存空间
+  PC_I_XY_WRAP = (int *)malloc((PC_DIM_XY + PC_W_I_DIM - 1) * sizeof(int));//存放int型数据
   PC_I_TH_WRAP = (int *)malloc((PC_DIM_TH + PC_W_I_DIM - 1) * sizeof(int));
 
   generate_wrap(PC_E_XY_WRAP, PC_DIM_XY - PC_W_E_DIM_HALF, PC_DIM_XY, 0, PC_DIM_XY, 0, PC_W_E_DIM_HALF);
@@ -141,14 +141,14 @@ void PosecellNetwork::pose_cell_builder()
   generate_wrap(PC_I_TH_WRAP, PC_DIM_TH - PC_W_I_DIM_HALF, PC_DIM_TH, 0, PC_DIM_TH, 0, PC_W_I_DIM_HALF);
 
   PC_CELLS_TO_AVG = 3;
-  PC_AVG_XY_WRAP = (int *)malloc((PC_DIM_XY + 2 * PC_CELLS_TO_AVG) * sizeof(int));
+  PC_AVG_XY_WRAP = (int *)malloc((PC_DIM_XY + 2 * PC_CELLS_TO_AVG) * sizeof(int));//左边3个右边3个，头与尾连接
   PC_AVG_TH_WRAP = (int *)malloc((PC_DIM_TH + 2 * PC_CELLS_TO_AVG) * sizeof(int));
 
   generate_wrap(PC_AVG_XY_WRAP, PC_DIM_XY - PC_CELLS_TO_AVG, PC_DIM_XY, 0, PC_DIM_XY, 0, PC_CELLS_TO_AVG);
   generate_wrap(PC_AVG_TH_WRAP, PC_DIM_TH - PC_CELLS_TO_AVG, PC_DIM_TH, 0, PC_DIM_TH, 0, PC_CELLS_TO_AVG);
 
   // sine and cosine lookups
-  PC_XY_SUM_SIN_LOOKUP = (double *)malloc(PC_DIM_XY * sizeof(double));
+  PC_XY_SUM_SIN_LOOKUP = (double *)malloc(PC_DIM_XY * sizeof(double));//计算机器人在位姿矩阵中位置时要用到
   PC_XY_SUM_COS_LOOKUP = (double *)malloc(PC_DIM_XY * sizeof(double));
   PC_TH_SUM_SIN_LOOKUP = (double *)malloc(PC_DIM_TH * sizeof(double));
   PC_TH_SUM_COS_LOOKUP = (double *)malloc(PC_DIM_TH * sizeof(double));
@@ -168,7 +168,7 @@ void PosecellNetwork::pose_cell_builder()
   double total = 0;
   int k, next = 0;
   int dim_centre = PC_W_E_DIM / 2;
-
+  //计算激励抑制的权重矩阵 这个是激励权重矩阵
   for (k = 0; k < PC_W_E_DIM; k++)
   {
     for (j = 0; j < PC_W_E_DIM; j++)
@@ -184,9 +184,9 @@ void PosecellNetwork::pose_cell_builder()
 
   for (next = 0; next < PC_W_E_DIM * PC_W_E_DIM * PC_W_E_DIM; next++)
   {
-    PC_W_EXCITE[next] /= total;
+    PC_W_EXCITE[next] /= total;  //归一化
   }
-
+  //这个就是抑制权重矩阵
   total = 0;
   dim_centre = PC_W_I_DIM / 2;
   next = 0;
@@ -209,7 +209,7 @@ void PosecellNetwork::pose_cell_builder()
   }
 }
 
-PosecellNetwork::~PosecellNetwork()
+PosecellNetwork::~PosecellNetwork()//析构函数，释放空间
 {
   int i;
   for (i = 0; i < PC_DIM_TH; i++)
@@ -239,7 +239,7 @@ PosecellNetwork::~PosecellNetwork()
 
 bool PosecellNetwork::inject(int act_x, int act_y, int act_z, double energy)
 {
-
+  //这个活性注入，且确定机器人的坐标是在指定范围内的
   if (act_x < PC_DIM_XY && act_x >= 0 && act_y < PC_DIM_XY && act_y >= 0 && act_z < PC_DIM_TH && act_z >= 0)
     posecells[act_z][act_y][act_x] += energy;
 
@@ -251,7 +251,7 @@ bool PosecellNetwork::excite(void)
   int i, j, k;
 
   // set all of pca_new to 0
-  memset(pca_new_memory, 0, posecells_memory_size);
+  memset(pca_new_memory, 0, posecells_memory_size);  //0值矩阵
 
   // loop in all three dimensions
   for (i = 0; i < PC_DIM_XY; i++)
@@ -260,7 +260,7 @@ bool PosecellNetwork::excite(void)
     {
       for (k = 0; k < PC_DIM_TH; k++)
       {
-        if (posecells[k][j][i] != 0)
+        if (posecells[k][j][i] != 0)  //位姿矩阵活性不为1的元素
         {
           // spread the pose cell energy
           pose_cell_excite_helper(i, j, k);
@@ -269,8 +269,8 @@ bool PosecellNetwork::excite(void)
     }
   }
 
-  //  pc.Posecells = pca_new;
-  memcpy(posecells_memory, pca_new_memory, posecells_memory_size);
+  //  pc.Posecells = pca_new; 将pca_new_memory的值传给posecells_memory   
+  memcpy(posecells_memory, pca_new_memory, posecells_memory_size);//相当于Posecells = pca_new
   return true;
 
 }
@@ -299,30 +299,30 @@ bool PosecellNetwork::inhibit(void)
     }
   }
 
-  for (i = 0; i < posecells_elements; i++)
+  for (i = 0; i < posecells_elements; i++)//由于这个是抑制，所以计算出来的激活posecells_memory要减去抑制
   {
     posecells_memory[i] -= pca_new_memory[i];
   }
 
   return true;
-}
+}//以上过程是一个激活和一个抑制，就像是局部的
 
 bool PosecellNetwork::global_inhibit()
 {
   int i;
   for (i = 0; i < posecells_elements; i++)
   {
-    if (posecells_memory[i] >= PC_GLOBAL_INHIB)
+    if (posecells_memory[i] >= PC_GLOBAL_INHIB) //大于PC_GLOBAL_INHIB的就减一个
     {
       posecells_memory[i] = (posecells_memory[i] - PC_GLOBAL_INHIB);
     }
-    else
+    else  //小于PC_GLOBAL_INHIB就变成0
     {
       posecells_memory[i] = 0;
     }
   }
   return true;
-}
+}  //上述是整体减去一个全局抑制，轻微的
 
 bool PosecellNetwork::normalise(void)
 {
@@ -330,14 +330,14 @@ bool PosecellNetwork::normalise(void)
   double total = 0;
   for (i = 0; i < posecells_elements; i++)
   {
-    total += posecells_memory[i];
+    total += posecells_memory[i]; //位姿细胞中活性总值
   }
 
-  assert(total > 0);
+  assert(total > 0);  //其作用是如果它的条件返回错误，则终止程序执行
 
   for (i = 0; i < posecells_elements; i++)
   {
-    posecells_memory[i] /= total;
+    posecells_memory[i] /= total;  //归一化
     //assert(posecells_memory[i] >= 0);
     //assert(!isnan(posecells_memory[i]));
   }
@@ -345,16 +345,16 @@ bool PosecellNetwork::normalise(void)
   return true;
 
 }
-
+//路径集成的函数 传入参数速度和角速度(角速度就是两帧图片之间角度变化,好像是这样)
 bool PosecellNetwork::path_integration(double vtrans, double vrot)
 {
   int dir_pc;
   double angle_to_add = 0;
 
   // scaling
-  vtrans /= PC_CELL_X_SIZE;
+  vtrans /= PC_CELL_X_SIZE;//使得速度值小于1的
 
-  if (vtrans < 0)
+  if (vtrans < 0)  //反向
   {
     vtrans = -vtrans;
     angle_to_add = M_PI;
@@ -366,7 +366,7 @@ bool PosecellNetwork::path_integration(double vtrans, double vrot)
 
     // % radians
     // dir = (dir_pc - 1) * pc.PC_C_SIZE_TH;
-    double dir = dir_pc * PC_C_SIZE_TH + angle_to_add;
+    double dir = dir_pc * PC_C_SIZE_TH + angle_to_add; //th轴是映射360度的，PC_C_SIZE_TH是轴上每个单位代表的角度
 
     double dir90, weight_sw, weight_se, weight_nw, weight_ne;
     int i, j;
@@ -392,9 +392,9 @@ bool PosecellNetwork::path_integration(double vtrans, double vrot)
 
     // pca_new(2:end-1,2:end-1) = pca90;
     for (j = 0; j < PC_DIM_XY; j++)
-    {
+    { //拷贝函数posecells中复制sizeof(double) * PC_DIM_XY个内存大小给pca_new_rot_ptr
       memcpy(&pca_new_rot_ptr[j + 1][1], &posecells[dir_pc][j][0], sizeof(double) * PC_DIM_XY);
-    }
+    } 
 
     // weight_sw = vtrans^2 *cos(dir90) * sin(dir90);
     weight_sw = vtrans * vtrans * cos(dir90) * sin(dir90);
@@ -555,7 +555,7 @@ double PosecellNetwork::find_best()
   double sum_x1, sum_x2, sum_y1, sum_y2;
 
   // % find the max activated cell
-  double max = 0;
+  double max = 0;  //找出活性最大的细胞
   for (k = 0; k < PC_DIM_TH; k++)
   {
     for (j = 0; j < PC_DIM_XY; j++)
@@ -658,7 +658,7 @@ double PosecellNetwork::find_best()
   best_th = th;
 
   return max;
-}
+}//得到最新的活性最大位置，然后一些列操作，找出机器人当前对应在位姿细胞中的位置
 
 double * PosecellNetwork::get_cells(void)
 {
@@ -675,7 +675,7 @@ bool PosecellNetwork::set_cells(double * cells)
 
 double PosecellNetwork::get_delta_pc(double x, double y, double th)
 {
-  double pc_th_corrected = best_th - vt_delta_pc_th;
+  double pc_th_corrected = best_th - vt_delta_pc_th;  //位置修正
   if (pc_th_corrected < 0) 
 	pc_th_corrected = PC_DIM_TH + pc_th_corrected;
   if (pc_th_corrected >= PC_DIM_TH)
@@ -688,33 +688,33 @@ double PosecellNetwork::get_min_delta(double d1, double d2, double max)
   double absval = abs(d1 - d2);
   return min(absval, max - absval);
 }
-
+//局部激活
 bool PosecellNetwork::pose_cell_excite_helper(int x, int y, int z)
 {
   int xl, yl, zl, xw, yw, zw, excite_index = 0;
 
   // loop in all dimensions
-  for (zl = z; zl < z + PC_W_E_DIM; zl++)
+  for (zl = z; zl < z + PC_W_E_DIM; zl++)//机器人活性最大位置，在跨PC_W_E_DIM的范围，进行激活
   {
     for (yl = y; yl < y + PC_W_E_DIM; yl++)
     {
       for (xl = x; xl < x + PC_W_E_DIM; xl++)
       {
-        // generate indices by wrapping where necessary
-        xw = PC_E_XY_WRAP[xl];
+        // generate indices by wrapping where necessary 通过在必要的地方包装来生成索引
+        xw = PC_E_XY_WRAP[xl];//包装xyth轴方向跨7个度的位置索引赋给xw，yw，zw
         yw = PC_E_XY_WRAP[yl];
         zw = PC_E_TH_WRAP[zl];
 
-        // for every pose cell, multiply the current energy by
-        // a pdf to spread the energy (PC_W_EXCITE is a 3d pdf)
-        pca_new[zw][yw][xw] += posecells[z][y][x] * PC_W_EXCITE[excite_index++];
+        // for every pose cell, multiply the current energy by  对于每个姿态单元，
+        // a pdf to spread the energy (PC_W_EXCITE is a 3d pdf)   将当前能量乘以pdf以传播能量(PC_W_EXCITE是一个3d pdf)
+        pca_new[zw][yw][xw] += posecells[z][y][x] * PC_W_EXCITE[excite_index++];//一个局部的激活
       }
     }
   }
 
   return true;
 }
-
+//抑制作用
 bool PosecellNetwork::pose_cell_inhibit_helper(int x, int y, int z)
 {
   int xl, yl, zl, xw, yw, zw, inhib_index = 0;
@@ -727,7 +727,7 @@ bool PosecellNetwork::pose_cell_inhibit_helper(int x, int y, int z)
       for (xl = x; xl < x + PC_W_I_DIM; xl++)
       {
         // generate indices by wrapping where necessary
-        xw = PC_I_XY_WRAP[xl];
+        xw = PC_I_XY_WRAP[xl];  //与上述激活步骤是差不多的，这个的跨度就是PC_W_I_DIM，对应PC_W_INHIB的大小
         yw = PC_I_XY_WRAP[yl];
         zw = PC_I_TH_WRAP[zl];
 
@@ -739,7 +739,7 @@ bool PosecellNetwork::pose_cell_inhibit_helper(int x, int y, int z)
 
   return true;
 }
-
+//对应四个正对方向的矩阵变化
 void PosecellNetwork::circshift2d(double * array, double * array_buffer, int dimx, int dimy, int shiftx, int shifty)
 {
   if (shifty == 0)
@@ -785,7 +785,7 @@ void PosecellNetwork::circshift2d(double * array, double * array_buffer, int dim
     }
   }
 }
-
+//矩阵变化，与matlab对应的话，应该是th轴刻度非四个正对方向的时，那一层位置矩阵的变化
 int PosecellNetwork::rot90_square(double ** array, int dim, int rot)
 {
   double centre = (double)(dim - 1) / 2.0f;
@@ -801,7 +801,7 @@ int PosecellNetwork::rot90_square(double ** array, int dim, int rot)
     rot += 4;
   }
 
-  switch (rot % 4)
+  switch (rot % 4)//除4的余数
   {
     case 0:
       return 1;
@@ -827,7 +827,7 @@ int PosecellNetwork::rot90_square(double ** array, int dim, int rot)
 	return 1;
   }
 
-  if (rot % 2 == 1)
+  if (rot % 2 == 1) 
   {
     for (j = 0; j < (int)(centre) + (1 - dim % 2); j++)
     {
@@ -856,28 +856,28 @@ int PosecellNetwork::rot90_square(double ** array, int dim, int rot)
   }
   return true;
 }
-
+//生成包装的函数,这个包装是为了做到闭环，机器人在现实中的闭环映射到位姿矩阵中，从边缘直接跨越到另一边
 int PosecellNetwork::generate_wrap(int * wrap, int start1, int end1, int start2, int end2, int start3, int end3)
 {
   int i, j;
   i = 0;
   for (j = start1; j < end1; i++, j++)
   {
-    wrap[i] = j;
+    wrap[i] = j;//58:61，但不包括61  i顺势加下去
   }
 
   for (j = start2; j < end2; i++, j++)
   {
-    wrap[i] = j;
+    wrap[i] = j; 
   }
 
   for (j = start3; j < end3; i++, j++)
   {
     wrap[i] = j;
   }
-  return 1;
+  return 1;//最终wrap变成[58:61 0:61 0:3]   
 }
-
+//计算权重矩阵的函数，利用高斯函数
 double PosecellNetwork::norm2d(double var, int x, int y, int z, int dim_centre)
 {
   return 1.0 / (var * sqrt(2.0 * M_PI))
