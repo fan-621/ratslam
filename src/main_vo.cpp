@@ -30,7 +30,7 @@
 using namespace std;
 
 #include "utils/utils.h"
-#include "ratslam/visual_odometry.h"
+#include "ratslam/visual_odometry.h"//
 
 #include <boost/property_tree/ini_parser.hpp>
 
