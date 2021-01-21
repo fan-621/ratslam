@@ -55,7 +55,7 @@ using boost::property_tree::ptree;
 namespace ratslam
 {
 
-struct VisualTemplate
+struct VisualTemplate  //结构体类型
 {
   unsigned int id;
   std::vector<double> data;
@@ -168,7 +168,7 @@ private:
   double VT_NORMALISATION;
   int VT_PANORAMIC;
 
-  std::vector<VisualTemplate> templates;
+  std::vector<VisualTemplate> templates;  //生成一个储存VisualTemplate类型的向量，名叫templates  是结构体
   std::vector<double> current_view;
 
   int image_size;
