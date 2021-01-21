@@ -45,10 +45,10 @@ namespace ratslam
 
 
 
-LocalViewMatch::LocalViewMatch(ptree settings)
+LocalViewMatch::LocalViewMatch(ptree settings)  //设置的值  try是settings中给的值  catch返回错误，就将最后面的值放入  暂时理解
 {
-  get_setting_from_ptree(VT_MIN_PATCH_NORMALISATION_STD, settings, "vt_min_patch_normalisation_std", (double)0);
-  get_setting_from_ptree(VT_PATCH_NORMALISATION, settings, "vt_patch_normalise", 0);
+  get_setting_from_ptree(VT_MIN_PATCH_NORMALISATION_STD, settings, "vt_min_patch_normalisation_std", (double)0);//异常检测，非一般的检测，有赋值的
+  get_setting_from_ptree(VT_PATCH_NORMALISATION, settings, "vt_patch_normalise", 0);//
   get_setting_from_ptree(VT_NORMALISATION, settings, "vt_normalisation", (double) 0);
   get_setting_from_ptree(VT_SHIFT_MATCH, settings, "vt_shift_match", 25);
   get_setting_from_ptree(VT_STEP_MATCH, settings, "vt_step_match", 5);
@@ -62,11 +62,11 @@ LocalViewMatch::LocalViewMatch(ptree settings)
   get_setting_from_ptree(IMAGE_VT_Y_RANGE_MIN, settings, "image_crop_y_min", 0);
   get_setting_from_ptree(IMAGE_VT_Y_RANGE_MAX, settings, "image_crop_y_max", -1);
 
-  TEMPLATE_SIZE = TEMPLATE_X_SIZE * TEMPLATE_Y_SIZE;
+  TEMPLATE_SIZE = TEMPLATE_X_SIZE * TEMPLATE_Y_SIZE;  //模板大小
 
-  templates.reserve(10000);
+  templates.reserve(10000);  //调整容量大小  是一个结构体
 
-  current_view.resize(TEMPLATE_SIZE);
+  current_view.resize(TEMPLATE_SIZE); //设置内存大小
 
   current_vt = 0;
   prev_vt = 0;
@@ -80,13 +80,13 @@ LocalViewMatch::~LocalViewMatch()
 
 void LocalViewMatch::on_image(const unsigned char *view_rgb, bool greyscale, unsigned int image_width, unsigned int image_height)
 {
-  if (view_rgb == NULL)
+  if (view_rgb == NULL)  //如果不是rgb图，直接退出这个函数
     return;
 
-  IMAGE_WIDTH = image_width;
-  IMAGE_HEIGHT = image_height;
+  IMAGE_WIDTH = image_width;  //宽度
+  IMAGE_HEIGHT = image_height; //高度
 
-  if (IMAGE_VT_X_RANGE_MAX == -1)
+  if (IMAGE_VT_X_RANGE_MAX == -1)//根据utils中的get_setting_from_ptree中catch赋值-1后，会显示错误
     IMAGE_VT_X_RANGE_MAX = IMAGE_WIDTH;
   if (IMAGE_VT_Y_RANGE_MAX == -1)
     IMAGE_VT_Y_RANGE_MAX = IMAGE_HEIGHT;
@@ -95,12 +95,12 @@ void LocalViewMatch::on_image(const unsigned char *view_rgb, bool greyscale, uns
   this->greyscale = greyscale;
 
   convert_view_to_view_template(greyscale);
-  prev_vt = get_current_vt();
+  prev_vt = get_current_vt();//当前模板编号变成旧的
   unsigned int vt_match_id;
-  compare(vt_error, vt_match_id);
+  compare(vt_error, vt_match_id);  //这个误差可能是MSE
   if (vt_error <= VT_MATCH_THRESHOLD)
-  {
-    set_current_vt((int)vt_match_id);
+  (int)vt_match_id
+    set_current_vt((int)vt_match_id); //如果当前模板编号不是(int)vt_match_id，则prev_vt为当前模板，当前模板编号就变成(int)vt_match_id
     cout << "VTM[" << setw(4) << get_current_vt() << "] " << endl;
     cout.flush();
   }
@@ -112,7 +112,7 @@ void LocalViewMatch::on_image(const unsigned char *view_rgb, bool greyscale, uns
     cout.flush();
   }
 
-}
+}//结束on_image
 
 
 void LocalViewMatch::clip_view_x_y(int &x, int &y)
@@ -127,7 +127,7 @@ void LocalViewMatch::clip_view_x_y(int &x, int &y)
   else if (y > TEMPLATE_Y_SIZE - 1)
     y = TEMPLATE_Y_SIZE - 1;
 
-}
+} //设定x和y的范围
 
 void LocalViewMatch::convert_view_to_view_template(bool grayscale)
 {
@@ -138,13 +138,13 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
   int y_block_size = sub_range_y / TEMPLATE_Y_SIZE;
   int pos;
 
-  for (unsigned int i; i < current_view.size(); i++)
-    current_view[i] = 0;
+  for (unsigned int i; i < current_view.size(); i++)  //size获取字符长度
+    current_view[i] = 0;//赋值变成0
 
   if (grayscale)
   {
     for (int y_block = IMAGE_VT_Y_RANGE_MIN, y_block_count = 0; y_block_count < TEMPLATE_Y_SIZE; y_block +=
-        y_block_size, y_block_count++)
+        y_block_size, y_block_count++)//for循环中括号中第三个语句是最后一步
     {
       for (int x_block = IMAGE_VT_X_RANGE_MIN, x_block_count = 0; x_block_count < TEMPLATE_X_SIZE; x_block +=
           x_block_size, x_block_count++)
@@ -180,7 +180,7 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
                 + (double)(view_rgb[pos + 2]));
           }
         }
-        current_view[data_next] /= (255.0 * 3.0);
+        current_view[data_next] /= (255.0 * 3.0);   //与if的区别在这
         current_view[data_next] /= (x_block_size * y_block_size);
 
         data_next++;
@@ -197,7 +197,7 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
       avg_value += current_view[i];
     }
 
-    avg_value /= current_view.size();
+    avg_value /= current_view.size(); //向量中的值相加，然后除向量中个数
 
     for (unsigned int i = 0; i < current_view.size(); i++)
     {
@@ -219,11 +219,11 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
 
     // first make a copy of the view
     std::vector<double> current_view_copy;
-    current_view_copy.resize(current_view.size());
+    current_view_copy.resize(current_view.size()); //字符大小给这个作内存大小
     for (unsigned int i = 0; i < current_view.size(); i++)
       current_view_copy[i] = current_view[i];
 
-    // this code could be significantly optimimised ....
+    // this code could be significantly optimimised ....  显著的优化
     for (int x = 0; x < TEMPLATE_X_SIZE; x++)
     {
       for (int y = 0; y < TEMPLATE_Y_SIZE; y++)
@@ -269,7 +269,7 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
 
   double sum = 0;
 
-  // find the mean of the data
+  // find the mean of the data  数据平均值
   for (int i = 0; i < current_view.size(); i++)
     sum += current_view[i];
 
@@ -277,10 +277,10 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
 
 }
 
-// create and add a visual template to the collection
+// create and add a visual template to the collection 创建可视化模板并将其添加到集合中
 int LocalViewMatch::create_template()
 {
-  templates.resize(templates.size() + 1);
+  templates.resize(templates.size() + 1);  
   VisualTemplate * new_template = &(*(templates.end() - 1));
 
   new_template->id = templates.size() - 1;
