@@ -100,14 +100,14 @@ void LocalViewMatch::on_image(const unsigned char *view_rgb, bool greyscale, uns
   compare(vt_error, vt_match_id);  //这个误差可能是MSE
   if (vt_error <= VT_MATCH_THRESHOLD)
   (int)vt_match_id
-    set_current_vt((int)vt_match_id); //如果当前模板编号不是(int)vt_match_id，则prev_vt为当前模板，当前模板编号就变成(int)vt_match_id
+    set_current_vt((int)vt_match_id); //如果当前模板编号不是(int)vt_match_id，则令prev_vt为当前模板，当前模板编号就变成(int)vt_match_id
     cout << "VTM[" << setw(4) << get_current_vt() << "] " << endl;
     cout.flush();
   }
   else
   {
     vt_relative_rad = 0;
-    set_current_vt(create_template());
+    set_current_vt(create_template());  //创建的新的编号
     cout << "VTN[" << setw(4) << get_current_vt() << "] " << endl;
     cout.flush();
   }
@@ -278,21 +278,21 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
 }
 
 // create and add a visual template to the collection 创建可视化模板并将其添加到集合中
-int LocalViewMatch::create_template()
+int LocalViewMatch::create_template() //创建模板
 {
-  templates.resize(templates.size() + 1);  
-  VisualTemplate * new_template = &(*(templates.end() - 1));
+  templates.resize(templates.size() + 1);  //模板数加1  size是返回templates向量中元素个数
+  VisualTemplate * new_template = &(*(templates.end() - 1));// 末尾元素-1？  这是一个结构体
 
-  new_template->id = templates.size() - 1;
-  double * data_ptr = &current_view[0];
-  new_template->data.reserve(TEMPLATE_SIZE);
+  new_template->id = templates.size() - 1;//可能最新的都是减一个
+  double * data_ptr = &current_view[0];  //第一个
+  new_template->data.reserve(TEMPLATE_SIZE); //reserve容器c应该预留多少个元素的空间  每一个data存储一个模板的容量
   for (int i = 0; i < TEMPLATE_SIZE; i++)
-    new_template->data.push_back(*(data_ptr++));
+    new_template->data.push_back(*(data_ptr++));//元素最后一个存入
 
   new_template->mean = current_mean;
 
   return templates.size() - 1;
-}
+}//返回的应该是创建模板的编号
 
 // compare a visual template to all the stored templates, allowing for 
 // slen pixel shifts in each direction
