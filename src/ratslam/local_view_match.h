@@ -178,7 +178,7 @@ private:
   int prev_vt;
   double vt_relative_rad;
 
-  const unsigned char *view_rgb;
+  const unsigned char *view_rgb; //这个类里view_rgb
   bool greyscale;
 
 };
