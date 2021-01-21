@@ -145,15 +145,15 @@ private:
 
   void convert_view_to_view_template(bool grayscale);
 
-  // compare a visual template to all the stored templates, allowing for
-  // slen pixel shifts in each direction
-  // returns the matching template and the MSE
+  // compare a visual template to all the stored templates, allowing for将可视模板与所有存储模板进行比较，允许
+  // slen pixel shifts in each direction     slen像素在每个方向上移动
+  // returns the matching template and the MSE   返回匹配的模板和MSE
   void compare(double &vt_err, unsigned int &vt_match_id);
 
-  int VT_SHIFT_MATCH;
+  int VT_SHIFT_MATCH;  //比较的像素点
   int VT_STEP_MATCH;
 
-  double VT_MATCH_THRESHOLD;
+  double VT_MATCH_THRESHOLD; //阈值，生成新模板的
   int TEMPLATE_SIZE;
   int IMAGE_WIDTH;
   int IMAGE_HEIGHT;
