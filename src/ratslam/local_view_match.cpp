@@ -334,7 +334,7 @@ void LocalViewMatch::compare(double &vt_err, unsigned int &vt_match_id)
 	BOOST_FOREACH(vt, templates)  //BOOST_FOREACH遍历STL容器  vt就像是templates中的每一个元素
 	{
 
-	if (abs(current_mean - vt.mean) > VT_MATCH_THRESHOLD + epsilon)
+	if (abs(current_mean - vt.mean) > VT_MATCH_THRESHOLD + epsilon)  //匹配系数阈值+0.005
 	  continue;//结束本次循环，进行下一次循环
 
 	// for each vt try matching the view at different offsets
@@ -347,12 +347,12 @@ void LocalViewMatch::compare(double &vt_err, unsigned int &vt_match_id)
 	  template_start_ptr = &vt.data[0] + offset;
 	  column_start_ptr = &data[0];
 	  row_size = TEMPLATE_X_SIZE;
-	  column_end_ptr = &data[0] + TEMPLATE_SIZE - offset;
-	  sub_row_size = TEMPLATE_X_SIZE - offset;
+	  column_end_ptr = &data[0] + TEMPLATE_SIZE - offset; //TEMPLATE_SIZE 是模板x*y
+	  sub_row_size = TEMPLATE_X_SIZE - offset;  //其中的一段  相当于匹配区域长度减去现在偏移位置
 
-	  // do from offset to end  偏移量到末尾
+	  // do from offset to end  偏移量到末尾 每一次循环加的是row_size，总共有TEMPLATE_Y_SIZE次
 	  for (column_row_ptr = column_start_ptr, template_row_ptr = template_start_ptr; column_row_ptr < column_end_ptr; column_row_ptr+=row_size, template_row_ptr+=row_size)
-	  {
+	  {      //循环TEMPLATE_X_SIZE - offset次
 		for (column_ptr = column_row_ptr, template_ptr = template_row_ptr; column_ptr < column_row_ptr + sub_row_size; column_ptr++, template_ptr++)
 		{
 		  cdiff += abs(*column_ptr - *template_ptr);  //最小差值
@@ -363,7 +363,7 @@ void LocalViewMatch::compare(double &vt_err, unsigned int &vt_match_id)
 		  break;
 	  }
 
-	  // do from start to offset   开始到偏移量
+	  // do from start to offset   开始到偏移量 
 	  template_start_ptr = &vt.data[0];
 	  column_start_ptr = &data[0] + TEMPLATE_X_SIZE - offset;
 	  row_size = TEMPLATE_X_SIZE;
@@ -412,7 +412,7 @@ void LocalViewMatch::compare(double &vt_err, unsigned int &vt_match_id)
 	// try to fast break based on error already great than previous errors
 	// handles 2d images shifting only in the x direction
 	// note I haven't tested on a 1d yet.
-	for (offset = 0; offset < VT_SHIFT_MATCH*2+1; offset += VT_STEP_MATCH)
+	for (offset = 0; offset < VT_SHIFT_MATCH*2+1; offset += VT_STEP_MATCH) //与上述区别上面是TEMPLATE_X_SIZE，这里是VT_SHIFT_MATCH*2+1
 	{
 	  cdiff = 0;
 	  template_start_ptr = &vt.data[0] + offset;
