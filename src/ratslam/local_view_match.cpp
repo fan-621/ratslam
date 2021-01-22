@@ -141,7 +141,7 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
   for (unsigned int i; i < current_view.size(); i++)  //size获取字符长度
     current_view[i] = 0;//赋值变成0
 
-  if (grayscale)
+  if (grayscale)//此处可能判断是否为灰度图
   {
     for (int y_block = IMAGE_VT_Y_RANGE_MIN, y_block_count = 0; y_block_count < TEMPLATE_Y_SIZE; y_block +=
         y_block_size, y_block_count++)//for循环中括号中第三个语句是最后一步
@@ -175,7 +175,7 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
         {
           for (int y = y_block; y < (y_block + y_block_size); y++)
           {
-            pos = (x + y * IMAGE_WIDTH) * 3;
+            pos = (x + y * IMAGE_WIDTH) * 3;  //会不会是rgb图3个通道
             current_view[data_next] += ((double)(view_rgb[pos]) + (double)(view_rgb[pos + 1])
                 + (double)(view_rgb[pos + 2]));
           }
@@ -186,7 +186,7 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
         data_next++;
       }
     }
-  }
+  }//最终将图片信息存入current_view中
 
   if (VT_NORMALISATION > 0)
   {
@@ -203,7 +203,7 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
     {
       current_view[i] = std::max(0.0, std::min(current_view[i] * VT_NORMALISATION / avg_value, 1.0));//重新赋值，剔除大于1和小于0的
     }
-  }
+  }//应该是对图片信息进行处理
 
   // now do patch normalisation
   // +- patch size on the pixel, ie 4 will give a 9x9
@@ -218,7 +218,7 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
     int patch_y_clip;
 
     // first make a copy of the view
-    std::vector<double> current_view_copy;
+    std::vector<double> current_view_copy;  //定义向量
     current_view_copy.resize(current_view.size()); //字符大小给这个作内存大小
     for (unsigned int i = 0; i < current_view.size(); i++)
       current_view_copy[i] = current_view[i];
