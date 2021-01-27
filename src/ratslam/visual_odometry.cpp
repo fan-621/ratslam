@@ -143,7 +143,7 @@ void VisualOdometry::visual_odo(double *data, unsigned short width, double *oldd
   {
     olddata[i] = data[i];  
   }//依旧是当前时刻变成上一时刻，但是data中的数据还不晓得是啥，上述102行解释可能是亮度，灰度值的大小
-  *vrot_rads = minoffset * CAMERA_FOV_DEG / IMAGE_WIDTH * CAMERA_HZ * M_PI / 180.0;
+  *vrot_rads = minoffset * CAMERA_FOV_DEG / IMAGE_WIDTH * CAMERA_HZ * M_PI / 180.0;//相比于matlab中多了一个CAMERA_HZ，相机参数？
   *vtrans_ms = mindiff * VTRANS_SCALING;
   if (*vtrans_ms > VTRANS_MAX)
     *vtrans_ms = VTRANS_MAX;
