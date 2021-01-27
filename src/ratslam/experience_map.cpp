@@ -39,8 +39,8 @@ namespace ratslam
 
 ExperienceMap::ExperienceMap(ptree settings)
 {
-  get_setting_from_ptree(EXP_CORRECTION, settings, "exp_correction", 0.5);
-  get_setting_from_ptree(EXP_LOOPS, settings, "exp_loops", 10);
+  get_setting_from_ptree(EXP_CORRECTION, settings, "exp_correction", 0.5);//修正参数
+  get_setting_from_ptree(EXP_LOOPS, settings, "exp_loops", 10); //闭环后，循环10次修正
   get_setting_from_ptree(EXP_INITIAL_EM_DEG, settings, "exp_initial_em_deg", 90.0);
 
   MAX_GOALS = 10;
@@ -54,7 +54,7 @@ ExperienceMap::ExperienceMap(ptree settings)
   goal_timeout_s = 0;
   goal_success = false;
 
-  accum_delta_facing = EXP_INITIAL_EM_DEG * M_PI/180;
+  accum_delta_facing = EXP_INITIAL_EM_DEG * M_PI/180;//初始在90度的位置 方向
   accum_delta_x = 0;
   accum_delta_y = 0;
   accum_delta_time_s = 0;
@@ -73,22 +73,22 @@ ExperienceMap::~ExperienceMap()
 int ExperienceMap::on_create_experience(unsigned int exp_id)
 {
 
-  experiences.resize(experiences.size() + 1);
+  experiences.resize(experiences.size() + 1);  //经验点加1
   Experience * new_exp = &(*(experiences.end() - 1));
 
-  if (experiences.size() == 0)
+  if (experiences.size() == 0) //没有经验点时
   {
     new_exp->x_m = 0;
     new_exp->y_m = 0;
     new_exp->th_rad = 0;
-  }
+  } //给新的经验点位置赋值在经验地图中
   else
   {
     new_exp->x_m = experiences[current_exp_id].x_m + accum_delta_x;
     new_exp->y_m = experiences[current_exp_id].y_m + accum_delta_y;
     new_exp->th_rad = clip_rad_180(accum_delta_facing);
   }
-  new_exp->id = experiences.size() - 1;
+  new_exp->id = experiences.size() - 1;//从0开始
 
   new_exp->goal_to_current = -1;
   new_exp->current_to_goal = -1;
@@ -96,7 +96,7 @@ int ExperienceMap::on_create_experience(unsigned int exp_id)
   if (experiences.size() != 1)
     on_create_link(get_current_id(), experiences.size() - 1, 0);
 
-  return experiences.size() - 1;
+  return experiences.size() - 1;  //经验点个数
 }
 
 // update the current position of the experience map
@@ -168,18 +168,18 @@ bool ExperienceMap::on_create_link(int exp_id_from, int exp_id_to, double rel_ra
 {
   Experience * current_exp = &experiences[exp_id_from];
 
-  // check if the link already exists
+  // check if the link already exists  检查是否有链接已经存在
   for (unsigned int i = 0; i < experiences[exp_id_from].links_from.size(); i++)
   {
-    if (links[experiences[current_exp_id].links_from[i]].exp_to_id == exp_id_to)
+    if (links[experiences[current_exp_id].links_from[i]].exp_to_id == exp_id_to) //最新的经验点
       return false;
   }
 
   for (unsigned int i = 0; i < experiences[exp_id_to].links_from.size(); i++)
   {
-    if (links[experiences[exp_id_to].links_from[i]].exp_to_id == exp_id_from)
+    if (links[experiences[exp_id_to].links_from[i]].exp_to_id == exp_id_from) //当前经验点
       return false;
-  }
+  }//两者之间已经链接的所有对象是否有对方，有就不会创建新的链接
 
   links.resize(links.size() + 1);
   Link * new_link = &(*(links.end() - 1));
