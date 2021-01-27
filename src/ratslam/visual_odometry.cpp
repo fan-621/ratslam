@@ -37,23 +37,23 @@ namespace ratslam
 
 VisualOdometry::VisualOdometry(ptree settings)
 {
-  get_setting_from_ptree(VTRANS_IMAGE_X_MIN, settings, "vtrans_image_x_min", 0);
+  get_setting_from_ptree(VTRANS_IMAGE_X_MIN, settings, "vtrans_image_x_min", 0); //求取速度所用到图像的B区
   get_setting_from_ptree(VTRANS_IMAGE_X_MAX, settings, "vtrans_image_x_max", IMAGE_WIDTH);
   get_setting_from_ptree(VTRANS_IMAGE_Y_MIN, settings, "vtrans_image_y_min", 0);
   get_setting_from_ptree(VTRANS_IMAGE_Y_MAX, settings, "vtrans_image_y_max", IMAGE_HEIGHT);
 
-  get_setting_from_ptree(VROT_IMAGE_X_MIN, settings, "vrot_image_x_min", 0);
+  get_setting_from_ptree(VROT_IMAGE_X_MIN, settings, "vrot_image_x_min", 0); //求取角度所用到图像的A区
   get_setting_from_ptree(VROT_IMAGE_X_MAX, settings, "vrot_image_x_max", IMAGE_WIDTH);
   get_setting_from_ptree(VROT_IMAGE_Y_MIN, settings, "vrot_image_y_min", 0);
   get_setting_from_ptree(VROT_IMAGE_Y_MAX, settings, "vrot_image_y_max", IMAGE_HEIGHT);
 
-  get_setting_from_ptree(CAMERA_FOV_DEG, settings, "camera_fov_deg", 50.0);
+  get_setting_from_ptree(CAMERA_FOV_DEG, settings, "camera_fov_deg", 50.0);  //对应matlab中视觉里程计29行
   get_setting_from_ptree(CAMERA_HZ, settings, "camera_hz", 10.0);
 
   get_setting_from_ptree(VTRANS_SCALING, settings, "vtrans_scaling", 100.0);
   get_setting_from_ptree(VTRANS_MAX, settings, "vtrans_max", 20.0);
 
-  vtrans_profile.resize(VTRANS_IMAGE_X_MAX - VTRANS_IMAGE_X_MIN);
+  vtrans_profile.resize(VTRANS_IMAGE_X_MAX - VTRANS_IMAGE_X_MIN);//vtrans_profile向量中元素变为最大减最小个
   vtrans_prev_profile.resize(VTRANS_IMAGE_X_MAX - VTRANS_IMAGE_X_MIN);
   vrot_profile.resize(VROT_IMAGE_X_MAX - VROT_IMAGE_X_MIN);
   vrot_prev_profile.resize(VROT_IMAGE_X_MAX - VROT_IMAGE_X_MIN);
@@ -68,7 +68,7 @@ void VisualOdometry::on_image(const unsigned char * data, bool greyscale, unsign
   IMAGE_WIDTH = image_width;
   IMAGE_HEIGHT = image_height;
 
-  if (first)
+  if (first)  //将profile中向量赋值给prev_profile，可能是当前时刻速度变成上一时刻的
   {
     for (unsigned int i = 0; i < vtrans_profile.size(); i++)
     {
@@ -117,7 +117,7 @@ void VisualOdometry::visual_odo(double *data, unsigned short width, double *oldd
     if (cdiff < mindiff)
     {
       mindiff = cdiff;
-      minoffset = -offset;
+      minoffset = -offset;//符号代表方向了，向左或者向右移动
     }
   }
 
@@ -137,12 +137,12 @@ void VisualOdometry::visual_odo(double *data, unsigned short width, double *oldd
       mindiff = cdiff;
       minoffset = offset;
     }
-  }
+  }//上述两个循环就是matlab中rs_compare_segments部分
 
   for (unsigned int i = 0; i < width; i++)
   {
-    olddata[i] = data[i];
-  }
+    olddata[i] = data[i];  
+  }//依旧是当前时刻变成上一时刻，但是data中的数据还不晓得是啥，上述102行解释可能是亮度，灰度值的大小
   *vrot_rads = minoffset * CAMERA_FOV_DEG / IMAGE_WIDTH * CAMERA_HZ * M_PI / 180.0;
   *vtrans_ms = mindiff * VTRANS_SCALING;
   if (*vtrans_ms > VTRANS_MAX)
