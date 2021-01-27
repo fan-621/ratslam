@@ -98,19 +98,19 @@ void LocalViewMatch::on_image(const unsigned char *view_rgb, bool greyscale, uns
   prev_vt = get_current_vt();//当前模板编号变成旧的
   unsigned int vt_match_id;
   compare(vt_error, vt_match_id);  //这个误差可能是MSE
-  if (vt_error <= VT_MATCH_THRESHOLD)	  
+  if (vt_error <= VT_MATCH_THRESHOLD)  //当前模板匹配，比较	  
   {
     set_current_vt((int)vt_match_id); //如果当前模板编号不是(int)vt_match_id，则令prev_vt为当前模板，当前模板编号就变成(int)vt_match_id
     cout << "VTM[" << setw(4) << get_current_vt() << "] " << endl;
     cout.flush();//刷新缓冲区
-  }
+  } //这种情况就是匹配成功，与之前场景类似
   else
   {
     vt_relative_rad = 0;
     set_current_vt(create_template());  //创建的新的编号
     cout << "VTN[" << setw(4) << get_current_vt() << "] " << endl;
     cout.flush();
-  }
+  }//以前的模板没有与之匹配的，创建新的
 
 }//结束on_image
 
