@@ -73,7 +73,7 @@ ExperienceMap::~ExperienceMap()
 int ExperienceMap::on_create_experience(unsigned int exp_id)
 {
 
-  experiences.resize(experiences.size() + 1);  //经验点加1
+  experiences.resize(experiences.size() + 1);  //经验点加1，分配空间也创建对象
   Experience * new_exp = &(*(experiences.end() - 1));
 
   if (experiences.size() == 0) //没有经验点时
@@ -103,7 +103,7 @@ int ExperienceMap::on_create_experience(unsigned int exp_id)
 // since the last experience
 void ExperienceMap::on_odo(double vtrans, double vrot, double time_diff_s)
 {
-  vtrans = vtrans * time_diff_s;
+  vtrans = vtrans * time_diff_s; //加入时间，是关联时间么，两个经验点之间
   vrot = vrot * time_diff_s;
   accum_delta_facing = clip_rad_180(accum_delta_facing + vrot);
   accum_delta_x = accum_delta_x + vtrans * cos(accum_delta_facing);
@@ -122,7 +122,7 @@ bool ExperienceMap::iterate()
   Link * link;
   double lx, ly, df;
 
-  for (i = 0; i < EXP_LOOPS; i++)
+  for (i = 0; i < EXP_LOOPS; i++) //检测闭环，修正经验点位置
   {
     for (exp_id = 0; exp_id < experiences.size(); exp_id++)
     {
@@ -218,7 +218,7 @@ int ExperienceMap::on_set_experience(int new_exp_id, double rel_rad)
   relative_rad = rel_rad;
 
   return 1;
-}
+}//创建一个新的经验点
 
 struct compare
 {
@@ -233,14 +233,14 @@ double exp_euclidean_m(Experience *exp1, Experience *exp2)
   return sqrt(
       (double)((exp1->x_m - exp2->x_m) * (exp1->x_m - exp2->x_m) + (exp1->y_m - exp2->y_m) * (exp1->y_m - exp2->y_m)));
 
-}
+} //两个经验点在经验地图中的位置
 
-double ExperienceMap::dijkstra_distance_between_experiences(int id1, int id2)
-{
+double ExperienceMap::dijkstra_distance_between_experiences(int id1, int id2) //传参可能是经验点的编号
+{//最短路径算法 迪科斯彻
   double link_time_s;
   unsigned int id;
 
-  std::priority_queue<Experience*, std::vector<Experience*>, compare> exp_heap;
+  std::priority_queue<Experience*, std::vector<Experience*>, compare> exp_heap;  //优先队列
 
   for (id = 0; id < experiences.size(); id++)
   {
@@ -261,7 +261,7 @@ double ExperienceMap::dijkstra_distance_between_experiences(int id1, int id2)
     {
       return DBL_MAX;
     }
-    exp_heap.pop();
+    exp_heap.pop();  //弹出元素？
 
     for (id = 0; id < exp->links_to.size(); id++)
     {
