@@ -80,7 +80,7 @@ void VisualOdometry::on_image(const unsigned char * data, bool greyscale, unsign
     }
     first = false;
   }
-
+//vtrans_profile以及vrot_profile是如何被赋值的，下面取值是第一个元素
   convert_view_to_view_template(&vtrans_profile[0], data, greyscale, VTRANS_IMAGE_X_MIN, VTRANS_IMAGE_X_MAX, VTRANS_IMAGE_Y_MIN, VTRANS_IMAGE_Y_MAX);
   visual_odo(&vtrans_profile[0], vtrans_profile.size(), &vtrans_prev_profile[0], vtrans_ms, &dummy);
 
