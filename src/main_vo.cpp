@@ -67,14 +67,14 @@ void image_callback(sensor_msgs::ImageConstPtr image)
 
 int main(int argc, char * argv[])
 {
-  ROS_INFO_STREAM(argv[0] << " - openRatSLAM Copyright (C) 2012 David Ball and Scott Heath");
+  ROS_INFO_STREAM(argv[0] << " - openRatSLAM Copyright (C) 2012 David Ball and Scott Heath");//ROS_INFO_STREAM相当于cout
   ROS_INFO_STREAM("RatSLAM algorithm by Michael Milford and Gordon Wyeth");
   ROS_INFO_STREAM("Distributed under the GNU GPL v3, see the included license file.");
 
   if (argc < 2)
   {
-    ROS_FATAL_STREAM("USAGE: " << argv[0] << " <config_file>");
-    exit(-1);
+    ROS_FATAL_STREAM("USAGE: " << argv[0] << " <config_file>");//相当于cout
+    exit(-1);//非正常运行导致退出程序
   }
 
   std::string topic_root = "";
