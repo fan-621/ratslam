@@ -48,7 +48,7 @@ namespace ratslam
 LocalViewMatch::LocalViewMatch(ptree settings)  //设置的值  try是settings中给的值  catch返回错误，就将最后面的值放入  暂时理解
 {
   get_setting_from_ptree(VT_MIN_PATCH_NORMALISATION_STD, settings, "vt_min_patch_normalisation_std", (double)0);//异常检测，非一般的检测，有赋值的
-  get_setting_from_ptree(VT_PATCH_NORMALISATION, settings, "vt_patch_normalise", 0);//
+  get_setting_from_ptree(VT_PATCH_NORMALISATION, settings, "vt_patch_normalise", 0);//以其中心为单位，设置补丁大小，有效增加局部对比度
   get_setting_from_ptree(VT_NORMALISATION, settings, "vt_normalisation", (double) 0);
   get_setting_from_ptree(VT_SHIFT_MATCH, settings, "vt_shift_match", 25);
   get_setting_from_ptree(VT_STEP_MATCH, settings, "vt_step_match", 5);
@@ -101,7 +101,7 @@ void LocalViewMatch::on_image(const unsigned char *view_rgb, bool greyscale, uns
   if (vt_error <= VT_MATCH_THRESHOLD)  //当前模板匹配，比较	  
   {
     set_current_vt((int)vt_match_id); //如果当前模板编号不是(int)vt_match_id，则令prev_vt为当前模板，当前模板编号就变成(int)vt_match_id
-    cout << "VTM[" << setw(4) << get_current_vt() << "] " << endl;
+    cout << "VTM[" << setw(4) << get_current_vt() << "] " << endl;//setw(n)字段宽度设置
     cout.flush();//刷新缓冲区
   } //这种情况就是匹配成功，与之前场景类似
   else
@@ -197,7 +197,7 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
       avg_value += current_view[i];
     }
 
-    avg_value /= current_view.size(); //向量中的值相加，然后除向量中个数
+    avg_value /= current_view.size(); //向量中的值相加，然后除向量中个数   平均强度
 
     for (unsigned int i = 0; i < current_view.size(); i++)
     {
