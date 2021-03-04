@@ -55,9 +55,9 @@ PosecellNetwork::PosecellNetwork(ptree settings)
   get_setting_from_ptree(VT_ACTIVE_DECAY, settings, "vt_active_decay", 1.0);
   get_setting_from_ptree(PC_VT_INJECT_ENERGY, settings, "pc_vt_inject_energy", 0.15);
   get_setting_from_ptree(PC_CELL_X_SIZE, settings, "pc_cell_x_size", 1.0);
-  get_setting_from_ptree(EXP_DELTA_PC_THRESHOLD, settings, "exp_delta_pc_threshold", 2.0);
+  get_setting_from_ptree(EXP_DELTA_PC_THRESHOLD, settings, "exp_delta_pc_threshold", 2.0);//位姿细胞与经验点相关联的，活性包质心超过这个细胞位置距离，就会生成新的经验点，也就是阈值
 
-  get_setting_from_ptree(PC_VT_RESTORE, settings, "pc_vt_restore", 0.05);
+  get_setting_from_ptree(PC_VT_RESTORE, settings, "pc_vt_restore", 0.05);//视觉模板重复遇到后活性反复注入，活性衰减到原始状态的速率
 
   // the starting position within the posecell network
   best_x = floor((double)PC_DIM_XY / 2.0);   //初始位置赋值
@@ -74,14 +74,14 @@ PosecellNetwork::PosecellNetwork(ptree settings)
 
 }
 
-void PosecellNetwork::pose_cell_builder()
+void PosecellNetwork::pose_cell_builder()  //创建位姿细胞
 {
   int i, j;
 
   PC_C_SIZE_TH = (2.0 * M_PI) / PC_DIM_TH;  //th轴代表了现实世界中的360度，将其映射3维中的一维
 
   // set the sizes
-  posecells_memory_size = sizeof(Posecell) * PC_DIM_XY * PC_DIM_XY * PC_DIM_TH;  //表示可存数据大小，整个位姿细胞
+  posecells_memory_size = sizeof(Posecell) * PC_DIM_XY * PC_DIM_XY * PC_DIM_TH;  //表示可存数据大小，整个位姿细胞  此处posecell是一种function，返回是double
   posecells_elements = PC_DIM_XY * PC_DIM_XY * PC_DIM_TH;  //整个3维矩阵元素总量
 
   // allocate the memory 分配内存
@@ -94,7 +94,7 @@ void PosecellNetwork::pose_cell_builder()
 
   // allocate first level pointers 一级指针
   posecells = (Posecell ***)malloc(sizeof(Posecell**) * PC_DIM_TH);// 有PC_DIM_TH个Posecell**赋给Posecell ***
-  pca_new = (Posecell ***)malloc(sizeof(Posecell**) * PC_DIM_TH);//感觉是位姿细胞从th轴来看，有PC_DIM_TH个元素
+  pca_new = (Posecell ***)malloc(sizeof(Posecell**) * PC_DIM_TH);
   //元素地址分配
   for (i = 0; i < PC_DIM_TH; i++)  
   {
@@ -121,7 +121,7 @@ void PosecellNetwork::pose_cell_builder()
 
   posecells_plane_th = (Posecell *)malloc(sizeof(Posecell) * (PC_DIM_XY + 2) * (PC_DIM_XY + 2)); //双精度浮点型(x+2)*(y+2)个元素
 
-  PC_W_EXCITE = (double *)malloc(sizeof(double) * PC_W_E_DIM * PC_W_E_DIM * PC_W_E_DIM);//激励矩阵
+  PC_W_EXCITE = (double *)malloc(sizeof(double) * PC_W_E_DIM * PC_W_E_DIM * PC_W_E_DIM);//激励矩阵分配内存
   PC_W_INHIB = (double *)malloc(sizeof(double) * PC_W_I_DIM * PC_W_I_DIM * PC_W_I_DIM);//抑制矩阵
 
   posecells[(int)best_th][(int)best_y][(int)best_x] = 1;//机器人起步时，初始位置映射到位姿细胞矩阵中的元素变成1，即活性为1
@@ -260,7 +260,7 @@ bool PosecellNetwork::excite(void)
     {
       for (k = 0; k < PC_DIM_TH; k++)
       {
-        if (posecells[k][j][i] != 0)  //位姿矩阵活性不为1的元素
+        if (posecells[k][j][i] != 0)  //位姿矩阵活性不为0的元素
         {
           // spread the pose cell energy
           pose_cell_excite_helper(i, j, k);
@@ -544,7 +544,7 @@ bool PosecellNetwork::path_integration(double vtrans, double vrot)
   }
 
   return true;
-}
+}//活性包移动
 
 double PosecellNetwork::find_best()
 {
