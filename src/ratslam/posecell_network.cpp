@@ -1006,7 +1006,7 @@ void PosecellNetwork::on_odo(double vtrans, double vrot, double time_diff_s)
   path_integration(vtrans, vrot);
   find_best();
   odo_update = true;
-}
+}//odo直接将上面的函数全部跑一遍
 
 void PosecellNetwork::create_view_template()
 {
