@@ -188,7 +188,7 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
     }
   }//最终将图片信息存入current_view中
 
-  if (VT_NORMALISATION > 0)
+  if (VT_NORMALISATION > 0)//标准化模板
   {
     double avg_value = 0;
 
@@ -207,7 +207,7 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
 
   // now do patch normalisation
   // +- patch size on the pixel, ie 4 will give a 9x9
-  if (VT_PATCH_NORMALISATION > 0)
+  if (VT_PATCH_NORMALISATION > 0)//为增强当前视图局部对比度
   {
     int patch_size = VT_PATCH_NORMALISATION;
     int patch_total = (patch_size * 2 + 1) * (patch_size * 2 + 1);
@@ -275,7 +275,7 @@ void LocalViewMatch::convert_view_to_view_template(bool grayscale)
 
   current_mean = sum/current_view.size();
 
-}
+}//到此为止，都是为模板匹配做的准备
 
 // create and add a visual template to the collection 创建可视化模板并将其添加到集合中
 int LocalViewMatch::create_template() //创建模板
